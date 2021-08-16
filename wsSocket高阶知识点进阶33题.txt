@@ -1,0 +1,220 @@
+[wsSocket高阶知识点进阶33题]
+
+[WebSocketServer服务端]
+1、node 的 ws模块(npm install ws -S) 是创建WebSocketServer的模块
+
+
+2、而WebSocketServer配置过的实例对象就是ws对象
+const WebSocketServer = require('ws').Server;
+const ws = new WebSocketServer({ port: 9010 });
+
+
+3、然后还是那个套路，服务端监听4个事件，分别是：上线连接、错误事件、消息监听和关闭连接事件
+ws.on('connection', client => {-----------connection连接事件
+    console.log(`客户端1上线.`);
+    client.name = ++ii; // 定义client客户端name属性，赋值流水号
+    clientMap[client.name] = client; // 往映射对象里面添加连接上来的client客户端对象
+    client.on('error', err => {------------客户端错误监听
+        console.log('捕获报错信息 ：=>', err.message);
+    });
+    // client.send('Server say: hello world client');
+    client.on('message', message =>{------客户端消息监听
+        console.log('接收到客户端数据：=>', message.toString());
+        broadcast(`${client.name}说：${message.toString()}`);
+    });
+    client.on('close', () => {---------------客户端连接关闭监听
+        console.log('==================客户端关闭连接=======================');
+    });
+});
+
+
+4、服务端广播套路：
+step1、先声明客户端映射对象
+const clientMap = {}; // map client object
+let ii = 0; // number of clients
+
+step2、再封装遍历客户端的广播方法
+// 广播
+const broadcast = (data) => {// 这个广播方法应该可以改造的更灵活，传个消息进来就行，不需要传client参数
+    for (const key in clientMap) {
+        clientMap[key].send(JSON.stringify({ type: 'emit', data }));
+    }
+}
+
+
+step3、最后在消息监听里面调用广播
+client.on('message', message =>{
+    console.log('接收到客户端数据：=>', message.toString());
+    broadcast(`${client.name}说：${message.toString()}`);
+});
+
+
+5、wsSocket服务端完整基础代码
+const WebSocketServer = require('ws').Server;
+const ws = new WebSocketServer({ port: 9010 });
+
+const clientMap = {}; // map client object
+let ii = 0; // number of clients
+
+ws.on('connection', client => {
+    console.log(`客户端1上线.`);
+    client.name = ++ii; // 定义client客户端name属性，赋值流水号
+    clientMap[client.name] = client; // 往映射对象里面添加连接上来的client客户端对象
+    client.on('error', err => {
+        console.log('捕获报错信息 ：=>', err.message);
+    });
+    // client.send('Server say: hello world client');
+    client.on('message', message =>{
+        console.log('接收到客户端数据：=>', message.toString());
+        broadcast(`${client.name}说：${message.toString()}`);
+    });
+    client.on('close', () => {
+        console.log('==================客户端关闭连接=======================');
+    });
+});
+
+// 广播
+const broadcast = (data) => {// 这个广播方法应该可以改造的更灵活，传个消息进来就行，不需要传client参数
+    for (const key in clientMap) {
+        clientMap[key].send(JSON.stringify({ type: 'emit', data }));
+    }
+}
+
+
+
+
+
+[WebSocket 的客户端 就内置在chrome等浏览器中]
+WebSocket客户端就算html和js等web页面：
+
+[wsClient.js脚本解析]
+6、ws协议下的服务端url地址和端口是new WebSocket()实例化的参数，用来创建ws客户端浏览器实例对象用
+const ws = new WebSocket('ws://127.0.0.1:9010');
+注意：WebSocket对象是浏览器内置的对象可以直接调用，生成(如果浏览器不支持，就没有WebSocket长连接功能)
+
+
+7、掌握webSocket客户端监听事件老四样和一发送
+监听4事件：
+连接监听--onopen、
+服务端消息监听--onmessage、
+服务端报错监听--onerror
+和服务端断开连接监听--onclose
+
+事件监听源码：
+ws.onopen = function(){
+    console.log('客户端1已上线');
+    ws.send('Hello WebSocket, 我是客户端给你发消息.');
+}
+ws.onmessage = function(evt){
+    console.log('客户端1接收到消息类型： =>', evt.type);
+    console.log('客户端1接收到消息源： =>', evt.origin);
+    console.log('客户端1接收到消息数据： =>', evt.data);
+    var emitStr = JSON.parse(evt.data);
+    // ws.send('Hello WebSocket, 我是客户端给你发消息.');
+    // 把广播消息显示在div内框上
+    var chatroom = document.getElementById('chatroom');
+    chatroom.innerHTML += '<br/>' + emitStr.data;
+}
+ws.onerror = function(err){
+    console.log('客户端1监听到报错信息：', err);
+    // alert('客户端1报错：' + err);
+}
+ws.onclose = function(){
+    console.log('服务端关闭连接');
+    // ws.send('Hello WebSocket, 我是客户端给你发消息.');
+}
+
+一发送是指的：ws.send()方法发送消息
+ws.send('Hello WebSocket, 我是客户端给你发消息.');
+
+8、发送方法封装
+function say() {
+    ws.send(myform.sayInput.value);
+}
+
+
+9、wsClient.js完整代码：
+const ws = new WebSocket('ws://127.0.0.1:9010');
+
+ws.onopen = function(){
+    console.log('客户端1已上线');
+    ws.send('Hello WebSocket, 我是客户端给你发消息.');
+}
+ws.onmessage = function(evt){
+    console.log('客户端1接收到消息类型： =>', evt.type);
+    console.log('客户端1接收到消息源： =>', evt.origin);
+    console.log('客户端1接收到消息数据： =>', evt.data);
+    var emitStr = JSON.parse(evt.data);
+    // ws.send('Hello WebSocket, 我是客户端给你发消息.');
+    // 把广播消息显示在div内框上
+    var chatroom = document.getElementById('chatroom');
+    chatroom.innerHTML += '<br/>' + emitStr.data;
+}
+ws.onerror = function(err){
+    console.log('客户端1监听到报错信息：', err);
+    // alert('客户端1报错：' + err);
+}
+ws.onclose = function(){
+    console.log('服务端关闭连接');
+    // ws.send('Hello WebSocket, 我是客户端给你发消息.');
+}
+
+function say() {
+    ws.send(myform.sayInput.value);
+}
+
+
+
+
+
+[wsClient.html页面解析]
+10、就是一正常的html页面，引用的wsClient.js脚本罢了
+主要是创建一个表单---模拟聊天室，给用户用来做页面交互(点击按钮发送输入消息和接收另一个客户端消息用)
+表单：
+<h1>WebSocket聊天室</h1>
+<div id="chatroom" class="chat-style"></div>
+<form name="myform">
+    <input type="text" name="sayInput" />
+    <input type="button" value="发送" onclick="say()">
+</form>
+
+
+11、记住--webSocket页面打开一个就是一个独立的客户端(哪怕用非服务器模式打开，右键打开都是可以的)
+
+
+12、那既然是同一套客户端代码，那怎么区分不同的用户呢？
+都是在服务端映射客户端那里生成映射属性来区分不同终端上的客户端的
+
+
+13、wsClient.html完整代码：
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Socket 客户端</title>
+    <style>
+        .chat-style {
+            width: 300px;
+            height: 400px;
+            overflow: auto;
+            border: 1px solid blue;
+        }
+    </style>
+    <script src="./wsClient.js"></script>
+</head>
+<body>
+    <h1>WebSocket聊天室</h1>
+    <div id="chatroom" class="chat-style"></div>
+    <form name="myform">
+        <input type="text" name="sayInput" />
+        <input type="button" value="发送" onclick="say()">
+    </form>
+    <script>
+        // function say() {
+        //     ws.send(myform.sayInput.value);
+        // }
+    </script>
+</body>
+</html>

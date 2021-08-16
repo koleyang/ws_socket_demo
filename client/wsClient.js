@@ -8,7 +8,11 @@ ws.onmessage = function(evt){
     console.log('客户端1接收到消息类型： =>', evt.type);
     console.log('客户端1接收到消息源： =>', evt.origin);
     console.log('客户端1接收到消息数据： =>', evt.data);
+    var emitStr = JSON.parse(evt.data);
     // ws.send('Hello WebSocket, 我是客户端给你发消息.');
+    // 把广播消息显示在div内框上
+    var chatroom = document.getElementById('chatroom');
+    chatroom.innerHTML += '<br/>' + emitStr.data;
 }
 ws.onerror = function(err){
     console.log('客户端1监听到报错信息：', err);
@@ -17,4 +21,8 @@ ws.onerror = function(err){
 ws.onclose = function(){
     console.log('服务端关闭连接');
     // ws.send('Hello WebSocket, 我是客户端给你发消息.');
+}
+
+function say() {
+    ws.send(myform.sayInput.value);
 }

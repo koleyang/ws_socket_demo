@@ -5,9 +5,27 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web Socket 客户端</title>
+    <style>
+        .chat-style {
+            width: 300px;
+            height: 400px;
+            overflow: auto;
+            border: 1px solid blue;
+        }
+    </style>
     <script src="./wsClient.js"></script>
 </head>
 <body>
-    
+    <h1>WebSocket聊天室</h1>
+    <div id="chatroom" class="chat-style"></div>
+    <form name="myform">
+        <input type="text" name="sayInput" />
+        <input type="button" value="发送" onclick="say()">
+    </form>
+    <script>
+        // function say() {
+        //     ws.send(myform.sayInput.value);
+        // }
+    </script>
 </body>
 </html>
